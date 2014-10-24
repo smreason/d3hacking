@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <title>D3 Page Template</title>
+      <style>
+        svg {
+          display:inline;
+        }
+        
+        .chart text {
+          font: 16px sans-serif;
+          text-anchor: middle;
+        }
+        
+        .bar {
+          fill: steelblue;
+        }
+        
+        .bar.low {
+          fill:red;
+        }
+        
+        .bar.high {
+          fill:green
+        }
+        
+        .bar:hover {
+          fill: brown;
+        }
+
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+          }
+
+        .position {
+          fill: blue;
+          opacity: .5;
+        }
+        
+        .axis text {
+          fill: #343434;
+          font: 12px sans-serif;
+          font-weight:bold;
+        }
+
+        .axis path,
+        .axis line {
+          fill: none;
+          stroke: #000;
+          shape-rendering: crispEdges;
+        }
+        
+        div.tooltip {   
+          position: absolute;           
+          text-align: center;           
+          width: 60px;                  
+          height: 48px;                 
+          padding: 0px; 
+          overflow:hidden;
+          font: 12px sans-serif;        
+          background: lightsteelblue;   
+          border: 0px;      
+          border-radius: 8px;           
+          pointer-events: none;         
+        }
+      </style>
+      <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+    </head>
+    <body>
+      <div id="chart1"></div>
+      <div id="chart2"></div>
+      <input type="text" class="date" value="2/1/2014"/>
+      <button id="increaseDate">Increase</button>
+      <button id="updateDate">Update</button>
+      <button id="playDate">Play</button>
+      <button id="stopDate">Stop</button>
+      <script type="text/javascript" src="returnsBarChart.js"></script>
+      <script type="text/javascript" src="positionsBubbleChart.js"></script>
+      <script type="text/javascript" src="historicalReturns.js"></script>
+    </body>
+</html>
