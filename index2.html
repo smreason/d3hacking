@@ -3,7 +3,14 @@
     <head>
       <meta charset="utf-8">
       <title>D3 Page Template</title>
+      <link rel="stylesheet" href="css/normalize.css">
+      <link rel="stylesheet" href="css/foundation.css">
+      <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
       <style>
+        body {
+          font-family: 'Helvetica Neue', Helvetica, Helvetica, Arial, sans-serif;
+        }
+
         svg {
           display:inline;
         }
@@ -29,6 +36,18 @@
           fill: brown;
         }
 
+        .returnDate {
+          fill: white;
+          stroke: blue;
+          stroke-width: 1.5px;
+        }
+
+        .activeDate {
+          fill:none;
+          stroke: red;
+          stroke-width: 1.5px;
+        }
+
         .line {
             fill: none;
             stroke: steelblue;
@@ -36,8 +55,8 @@
           }
 
         .position {
-          fill: blue;
-          opacity: .5;
+          opacity: .9;
+          stroke-width: 3.5px;
         }
         
         .axis text {
@@ -52,7 +71,36 @@
           stroke: #000;
           shape-rendering: crispEdges;
         }
+
+        .grid .tick {
+            stroke: lightgrey;
+            stroke-opacity: 0.7;
+            shape-rendering: crispEdges;
+        }
+
+        .grid path {
+                  stroke-width: 0;
+        }
+
+        line.grid-line {
+          stroke: lightgrey;
+          stroke-opacity: 0.9;
+        }
+
+        input {
+          width: 100px;
+        }
+
+        button {
+          background-color:#1f77b4;
+          font-size: 0.92222rem;
+          padding: 4px 8px;
+        }
         
+        #controls {
+          margin-left:200px;
+        }
+
         div.tooltip {   
           position: absolute;           
           text-align: center;           
@@ -71,12 +119,16 @@
     </head>
     <body>
       <div id="chart1"></div>
+      <div id="controls">
+        <button id="decreaseDate"><i class="fa fa-step-backward"></i></button>
+        <input type="text" class="date" value="02/01/2014"/>
+        <button id="increaseDate"><i class="fa fa-step-forward"></i></button>
+        <button id="playDate"><i class="fa fa-play"></i></button>
+        <button id="stopDate"><i class="fa fa-pause"></i></button>
+      </div>
       <div id="chart2"></div>
-      <input type="text" class="date" value="2/1/2014"/>
-      <button id="increaseDate">Increase</button>
-      <button id="updateDate">Update</button>
-      <button id="playDate">Play</button>
-      <button id="stopDate">Stop</button>
+      <script type="text/javascript" src="moment.js"></script>
+      <script type="text/javascript" src="dataManager.js"></script>
       <script type="text/javascript" src="returnsBarChart.js"></script>
       <script type="text/javascript" src="positionsBubbleChart.js"></script>
       <script type="text/javascript" src="historicalReturns.js"></script>

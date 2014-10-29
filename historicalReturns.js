@@ -1,23 +1,26 @@
 
+var currentPortfolio = 1;
+var currentIndex = 0;
+var playing = false;
+
 var historicalData = [{ date: new Date('1/1/2014'), returns: 0}];
+
+var dataManager = d3.fool.dataManager(historicalData);
 var returnsChart = d3.fool.returnsBarChart().height(400).width(800);
 var positionsBubbleChart = d3.fool.positionsBubbleChart().height(400).width(500);
 
+var decreaseButton = d3.select("#decreaseDate");
 var dateInput = d3.select("input.date");
 var increaseButton = d3.select("#increaseDate");
 var playButton = d3.select("#playDate");
 var stopButton = d3.select("#stopDate");
-var updateButton = d3.select("#updateDate");
-var playing = false;
 
 increaseButton.on('click', function() {
-    increaseAndUpdate();
+    changeDateAndUpdate(1);
 });
 
-updateButton.on('click', function() {
-    loadHistoricalReturnsData(dateInput.property("value"), function() {
-        update();
-    });
+decreaseButton.on('click', function() {
+    changeDateAndUpdate(-1);
 });
 
 playButton.on('click', function() {
@@ -33,7 +36,7 @@ stopButton.on('click', function() {
 
 function autoIncreaseAndUpdate() {
     if (!playing) return;
-    increaseAndUpdate();
+    changeDateAndUpdate(1);
     var date = new Date(dateInput.property("value"));
     if (date < Date.now()) {
         setTimeout(function() {
@@ -42,36 +45,45 @@ function autoIncreaseAndUpdate() {
     }
 }
 
-function increaseAndUpdate() {
-    var date = new Date(dateInput.property("value"));
-    date.setMonth(date.getMonth() + 1);
-    dateInput.property("value", (date.getMonth() + 1) + '/' + date.getDate() + '/' +  date.getFullYear());
-    loadHistoricalReturnsData(dateInput.property("value"), function() {
-        update();
-    });
+function changeDateAndUpdate(change) {
+    if (currentIndex + change < 0) { return; }
+    currentIndex = currentIndex + change;
+    dateInput.property("value", moment(dateInput.property("value")).add(change, "months").format("L"));
+    
+    if (currentIndex < historicalData.length) {
+        returnsChart.setDatePointIndex(currentIndex-1);
+        updatePositions(currentIndex);
+    }
+    else {
+        dataManager.loadHistoricalReturnsData(currentPortfolio, dateInput.property("value"), function(data) {
+            historicalData.push(data);
+            updateReturns();
+            updatePositions(currentIndex);
+        });
+    }
 }
 
-function update() { 
-  d3.select('#chart1') 
-    .datum(historicalData) 
-    .call(returnsChart); 
-  d3.select('#chart2') 
-    .datum(historicalData[historicalData.length - 1].positions) 
-    .call(positionsBubbleChart); 
+function updateReturns() { 
+    d3.select('#chart1') 
+        .datum(historicalData) 
+        .call(returnsChart); 
 }
 
-function loadHistoricalReturnsData(historicalDate, callback) {
-    d3.json('http://localhost.apiary.fool.com/folios/returns/historical.json?HistoricalDate=' + historicalDate + '&portfolioReferenceNum=1', function(returnsData) {
-        console.log(returnsData);
-        var activePositions = returnsData.Positions.filter(function(p) { return p.UnrealizedShares > 0; });
-        historicalData.push({   date: new Date(historicalDate), 
-                                returns: returnsData.OverallReturn,
-                                positions: activePositions 
-                            });
-        callback();
-    });
+function updatePositions(i) {
+    d3.select('#chart2') 
+        .datum(historicalData[i].positions) 
+        .call(positionsBubbleChart);
 }
 
-loadHistoricalReturnsData('2/1/2014', function() {
-    update();
+returnsChart.on("dateChanged", function(i) { 
+    currentIndex = i;
+    dateInput.property("value", moment(historicalData[i].date).format("L"));
+    updatePositions(i);
+});
+
+dataManager.loadHistoricalReturnsData(1, '2/1/2014', function(data) {
+    currentIndex++;
+    historicalData.push(data);
+    updateReturns();
+    updatePositions(1);
 });
