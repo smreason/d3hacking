@@ -6,22 +6,25 @@ d3.fool.returnsChart = function module() {
       height = 500,
       ease = "bounce";
 
-  var activeDatePoint;
+  var activeDatePoint, activeIndex;
   var priceDataInstrument;
   var returnsLabel;
   var dispatch = d3.dispatch('dateChanged');
   var formatPercent = d3.format(".0%");
   var colors = d3.scale.category10();
 
+  var chartH, chartW;
   var returnsData;
+  var yAxis, xAxis;
   var x1, y1, line;
 
   function exports(selection) {
     selection.each(function(data) { 
-        var chartW = width - margin.left - margin.right, 
-            chartH = height - margin.top - margin.bottom;
+        chartW = width - margin.left - margin.right; 
+        chartH = height - margin.top - margin.bottom;
 
         returnsData = data;
+        activeIndex = returnsData.length - 1;
 
         x1 = d3.time.scale()
             .range([0, chartW])
@@ -36,16 +39,15 @@ d3.fool.returnsChart = function module() {
 
         y1 = d3.scale.linear()
             .range([chartH, 0])
-            .domain([d3.min([-.2, d3.min(data, function(d) { return d.returns; })]), 
-                     d3.max([.5, d3.max(data, function(d) { return d.returns; })])]);  
+            .domain([d3.min([-.2, d3.min(returnsData, function(d) { return d.returns; })]), 
+                     d3.max([.5, d3.max(returnsData, function(d) { return d.returns; })])]);  
 
         line = d3.svg.line()
-            .interpolate("cardinal")
+            .interpolate("monotone")
             .x(function(d) { return x1(d.date); })
             .y(function(d) { return y1(d.returns); });
 
-        var xAxis = d3.svg.axis().scale( x1).ticks(xTicks).orient('bottom').tickFormat(d3.time.format("%b %y"));
-        var yAxis = d3.svg.axis().scale( y1).orient('left').ticks(6).tickFormat(formatPercent);
+        xAxis = d3.svg.axis().scale( x1).ticks(xTicks).orient('bottom').tickFormat(d3.time.format("%b %y"));
 
         var svg = d3.select(this)
                 .selectAll("svg")
@@ -74,12 +76,6 @@ d3.fool.returnsChart = function module() {
                               .append('circle')
                               .classed("activeDate", true);
         }
-        activeDatePoint
-          .attr("cx", x1(data[data.length-1].date))
-          .attr("cy", y1(data[data.length-1].returns))
-          .attr('r', 18)
-          .transition()
-          .attr('r', 8);
 
         svg.transition().attr({ width: width, height: height}); 
         svg.select('.container-group').attr({ transform: 'translate(' + margin.left + ',' + margin.top + ')'});
@@ -89,47 +85,62 @@ d3.fool.returnsChart = function module() {
             .ease(ease) 
             .attr({ transform: 'translate( 0,' + (chartH) + ')'}) 
             .call(xAxis);
-
-        svg.select('.y-axis-group.axis') 
-            .transition() 
-            .ease(ease) 
-            .call(yAxis);
       
-        var lineGraph = svg.select('.chart-group') 
-            .selectAll('path.line')
-            .data([data]);
-
-        lineGraph.enter()
-            .append("path")
-            .attr("class", "line");
-
-        lineGraph.transition().attr("d", line);
-
-        var points = svg.select('.chart-group') 
-            .selectAll('.returnDate') 
-            .data(data);
-                    
-        points.enter()
-            .append('circle')
-            .classed('returnDate', true)
-            .on('click', function(d, i) {
-                moveActiveDatePoint(this, i);
-                updateReturnsLabel(d);
-                dispatch.dateChanged(i);
-            });
-            
-        points
-            .transition() 
-            .attr('data-date', function(d) { return d.date; })
-            .attr("cx", function(d) { return x1(d.date); })
-            .attr("cy", function(d) { return y1(d.returns); })
-            .attr("r", 5);
-    
-        points.exit()
-            .transition()
-            .style({ opacity: 0 })
-            .remove();
+        chartReturns();
     });
+  }
+
+  function chartReturns() {
+    var svg = d3.select('svg');
+    var lineGraph = svg.select('.chart-group') 
+            .selectAll('path.line')
+            .data([returnsData]);
+
+    lineGraph.enter()
+        .append("path")
+        .attr("class", "line");
+
+    lineGraph.transition().attr("d", line);
+
+    yAxis = d3.svg.axis().scale( y1).orient('left').ticks(6).tickFormat(formatPercent);
+    svg.select('.y-axis-group.axis') 
+        .transition() 
+        .ease(ease) 
+        .call(yAxis);
+
+    activeDatePoint
+      .attr("cx", x1(returnsData[activeIndex].date))
+      .attr("cy", y1(returnsData[activeIndex].returns))
+      .attr('r', 18)
+      .transition()
+      .attr('r', 8);
+
+    var points = svg.select('.chart-group') 
+        .selectAll('.returnDate') 
+        .data(returnsData);
+                
+    points.enter()
+        .append('circle')
+        .classed('returnDate', true)
+        .on('click', function(d, i) {
+            activeIndex = i;
+            moveActiveDatePoint(this, i);
+            updateReturnsLabel(d);
+            dispatch.dateChanged(i);
+        });
+        
+    points
+        .transition() 
+        .attr('data-date', function(d) { return d.date; })
+        .attr("cx", function(d) { return x1(d.date); })
+        .attr("cy", function(d) { return y1(d.returns); })
+        .attr("r", 5);
+
+    points.exit()
+        .transition()
+        .style({ opacity: 0 })
+        .remove();
+
   }
 
   function moveActiveDatePoint(element, dateIndex) {
@@ -153,10 +164,17 @@ d3.fool.returnsChart = function module() {
 
   exports.showPriceData = function(position) {
     var svg, priceData;
+    var minReturn, maxReturn;
+
+    y1 = d3.scale.linear()
+        .range([chartH, 0])
+        .domain([d3.min([-.2, d3.min(returnsData, function(d) { return d.returns; })]), 
+                 d3.max([.5, d3.max(returnsData, function(d) { return d.returns; })])]);
 
     if (position.instrumentId === priceDataInstrument) {
-      priceDataInstrument = 0;
+      priceDataInstrument = 0; 
       removePriceData();
+      chartReturns(); 
       return;
     }
 
@@ -165,20 +183,27 @@ d3.fool.returnsChart = function module() {
     priceData = [];
     returnsData.forEach(function(d) {
       var positions = d.positions.filter(function(p) { return p.Instrument.InstrumentId === position.instrumentId; });
-      var positionReturn = positions.length ? positions[0].OverallReturn : 0;
       if (positions.length) {
-        priceData.push({ returns: positionReturn, date: d.date });
+        priceData.push({ returns: positions[0].OverallReturn, date: d.date });
       }
-      
-    });
+    }); 
+
+    minReturn = d3.min([-.2, d3.min(priceData, function(d) { return d.returns; })]);
+    maxReturn = d3.max([.5, d3.max(priceData, function(d) { return d.returns; })]);
+
+    y1 = d3.scale.linear()
+      .range([chartH, 0])
+      .domain([d3.min([minReturn, y1.domain()[0]]), d3.max([maxReturn, y1.domain()[1]])]);
+    
+    chartReturns(); 
 
     var lineGraph = svg.select('.chart-group') 
-        .selectAll('path.instrument')
+        .selectAll('path.positionReturn')
         .data([priceData]);
 
     lineGraph.enter()
         .append("path")
-        .attr("class", "instrument");
+        .attr("class", "positionReturn");
 
     lineGraph.transition()
       .attr("d", line)
@@ -188,7 +213,10 @@ d3.fool.returnsChart = function module() {
   }
 
   exports.setDatePointIndex = function(index) {
-    var points = d3.select('.chart-group').selectAll('.returnDate');
+    var points;
+    activeIndex = index;
+
+    points = d3.select('.chart-group').selectAll('.returnDate');
     points.each(function(d, i) { 
       if (i === index) { 
         moveActiveDatePoint(this, i);

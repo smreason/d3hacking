@@ -78,7 +78,7 @@ d3.fool.positionsBubbleChart = function module() {
         positions
             .transition().duration(duration)
             .attr("cx", function(d, i) { return x1(i+1); })
-            .attr("cy", function(d) { console.log(d.Ticker + " ( " + d.UnrealizedShares + ") = " + d.OverallReturn); return y1(d.OverallReturn); })
+            .attr("cy", function(d) { return y1(d.OverallReturn); })
             .attr("r", function(d) { return d3.max([2, d.PercentOfPortfolio * 100]); })
             .attr("fill", "none")
             .attr("stroke", function(d, i) { 
