@@ -49,10 +49,15 @@
         }
 
         .line {
-            fill: none;
-            stroke: steelblue;
-            stroke-width: 1.5px;
-          }
+          fill: none;
+          stroke: blue;
+          stroke-width: 2px;
+        }
+
+        .instrument {
+          fill: none;
+          stroke-width: 1.5px;
+        }
 
         .position {
           opacity: .9;
@@ -85,6 +90,11 @@
         line.grid-line {
           stroke: lightgrey;
           stroke-opacity: 0.9;
+        }
+
+        select {
+          display:inline;
+          width:120px;
         }
 
         input {
@@ -120,6 +130,9 @@
     <body>
       <div id="chart1"></div>
       <div id="controls">
+        <select id="portfolioSelect">
+          <option value="0">All Portfolios</option>
+        </select>
         <button id="decreaseDate"><i class="fa fa-step-backward"></i></button>
         <input type="text" class="date" value="02/01/2014"/>
         <button id="increaseDate"><i class="fa fa-step-forward"></i></button>
@@ -129,7 +142,8 @@
       <div id="chart2"></div>
       <script type="text/javascript" src="moment.js"></script>
       <script type="text/javascript" src="dataManager.js"></script>
-      <script type="text/javascript" src="returnsBarChart.js"></script>
+      <script type="text/javascript" src="returnsChart.js"></script>
+      <script type="text/javascript" src="returnsComboChart.js"></script>
       <script type="text/javascript" src="positionsBubbleChart.js"></script>
       <script type="text/javascript" src="historicalReturns.js"></script>
     </body>

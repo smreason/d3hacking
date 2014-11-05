@@ -9,6 +9,7 @@ d3.fool.positionsBubbleChart = function module() {
     var duration = 1000;
     var formatPercent = d3.format(".0%");
     var colors = d3.scale.category10();
+    var dispatch = d3.dispatch('positionSelected');
 
     function exports(selection) {
     selection.each(function(data) { 
@@ -72,7 +73,7 @@ d3.fool.positionsBubbleChart = function module() {
                     
         positions.enter()
             .append('circle')
-            .attr("class", "position")
+            .attr("class", "position");
             
         positions
             .transition().duration(duration)
@@ -83,6 +84,7 @@ d3.fool.positionsBubbleChart = function module() {
             .attr("stroke", function(d, i) { 
                 return colors(i);        
             });
+
     
         positions.exit()
             .transition()
@@ -96,6 +98,9 @@ d3.fool.positionsBubbleChart = function module() {
         labels.enter()
             .append('text')
             .attr("class", "positions-label")
+            .on('click', function(d, i) {
+                dispatch.positionSelected({ instrumentId: d.Instrument.InstrumentId, color: colors(i) });
+            });
             
         labels
             .transition().duration(duration)
@@ -136,5 +141,7 @@ d3.fool.positionsBubbleChart = function module() {
     return this; 
   };
  
+  d3.rebind(exports, dispatch, 'on');
+
   return exports;
 };
