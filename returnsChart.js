@@ -158,6 +158,10 @@ d3.fool.returnsChart = function module() {
     chartBenchmark();
   }
 
+  function chartArea(svg) {
+
+  }
+
   function chartBenchmark() {
     var svg = d3.select('svg');
 
@@ -208,11 +212,6 @@ d3.fool.returnsChart = function module() {
     var svg, PositionData;
     var minReturn, maxReturn;
 
-    // y1 = d3.scale.linear()
-    //     .range([chartH, 0])
-        // .domain([d3.min([-.2, d3.min(returnsData, function(d) { return d.returns; })]), 
-        //          d3.max([.5, d3.max(returnsData, function(d) { return d.returns; })])]);
-
     if (position.instrumentId === PositionDataInstrument) {
       PositionDataInstrument = 0; 
       removePositionData();
@@ -253,7 +252,7 @@ d3.fool.returnsChart = function module() {
 
     lineGraph.transition()
       .attr("d", line)
-      .style("stroke-dasharray", ("3, 3"))
+      //.style("stroke-dasharray", ("3, 3"))
       .attr("stroke", position.color);
 
     lineGraph.exit().remove();
@@ -262,13 +261,22 @@ d3.fool.returnsChart = function module() {
     var matchIndex = bisect(PositionData, position.x);
     var previousY = y1(PositionData[matchIndex-1].returns);
     var nextY = y1(PositionData[matchIndex].returns);
+    var labelYoffset = nextY < chartH * .2 ? -30 : -5;
     
     svg.append('text')
         .classed("positionText", true)
         .attr("x", position.x)
-        .attr("y", (previousY+nextY)/2 - 5)
+        .attr("y", (previousY+nextY)/2 - labelYoffset)
+        .attr("fill", "black")
         .attr("stroke", position.color)
         .text(position.ticker);
+
+    // svg.append("svg:image")
+    //   .attr("width", 50)
+    //   .attr("height", 50)
+    //   .attr("x", position.x)
+    //   .attr("y", (previousY+nextY)/2 - labelYoffset)
+    //   .attr("xlink:href", "https://g.foolcdn.com/art/companylogos/square/" + position.ticker + ".png")
   }
 
   exports.setDatePointIndex = function(index) {

@@ -25,6 +25,8 @@ portfolioSelect.on('change', function(e) {
     setDateInput(historicalData[currentPortfolio].data[currentIndex].date);
     updateReturns();
     updatePositions(currentIndex);
+
+    d3.select("#portfolioName").text(this.selectedOptions[0].text);
 });
 
 increaseButton.on('click', function() {
@@ -114,7 +116,7 @@ function updatePositions(i) {
 
 function setDateInput(date) {
     dateInput.property("value", moment(date).format("L"));
-    dateDisplay.text(moment(date).format("MMM YY"));
+    dateDisplay.text(moment(date).format("MMM YYYY"));
 }
 
 function loadInitialReturns(portfolio, date, isFirst) {
