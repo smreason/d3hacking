@@ -13,6 +13,7 @@ var positionsChart = d3.fool.positionsBubbleChart().height(400).width(800);
 var portfolioSelect = d3.select("#portfolioSelect");
 var decreaseButton = d3.select("#decreaseDate");
 var dateInput = d3.select("input.date");
+var dateDisplay = d3.select("#dateDisplay");
 var increaseButton = d3.select("#increaseDate");
 var playButton = d3.select("#playDate");
 var stopButton = d3.select("#stopDate");
@@ -41,6 +42,15 @@ playButton.on('click', function() {
     }, 1500);
 });
 
+d3.selectAll('input[name="returnsType"').on('change', function() {
+    returnsChart.returnsType(this.value);
+    updateReturns();
+});
+
+d3.selectAll('input[name="benchmarkType"').on('change', function() {
+    returnsChart.benchmarkType(this.value);
+});
+
 stopButton.on('click', function() {
     playing = false;
 });
@@ -63,7 +73,7 @@ function changeDateAndUpdate(change) {
     if (historicalDate.add(change, "months") > moment()) { return; }
 
     currentIndex = currentIndex + change;
-    dateInput.property("value", historicalDate.format("L"));
+    setDateInput(historicalDate.toDate());
     
     if (currentIndex < historicalData[currentPortfolio].data.length) {
         returnsChart.setDatePointIndex(currentIndex);
@@ -104,6 +114,7 @@ function updatePositions(i) {
 
 function setDateInput(date) {
     dateInput.property("value", moment(date).format("L"));
+    dateDisplay.text(moment(date).format("MMM YY"));
 }
 
 function loadInitialReturns(portfolio, date, isFirst) {
@@ -145,12 +156,12 @@ dataManager.loadPortfolios(function(data) {
 
 returnsChart.on("dateChanged", function(i) { 
     currentIndex = i;
-    dateInput.property("value", moment(historicalData[currentPortfolio].data[i].date).format("L"));
+    setDateInput(historicalData[currentPortfolio].data[i].date);
     updatePositions(i);
 });
 
 positionsChart.on("positionSelected", function(position) {
-    returnsChart.showPriceData(position);
+    returnsChart.showPositionData(position);
 });
 
 dataManager.on('dataLoading', function() {

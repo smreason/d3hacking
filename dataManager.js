@@ -4,7 +4,7 @@ d3.fool.dataManager = function module() {
     var exports = {}, 
     uid,
     dispatch = d3.dispatch('dataReady', 'dataLoading'),
-    server = '//localhost.apiary.fool.com';
+    server = '//api.fool.com';
 
     exports.loadPortfolios = function(callback) {
         d3.json(server + '/folios/portfolios').header("X-Requested-With", "XMLHttpRequest").get( 
@@ -27,6 +27,9 @@ d3.fool.dataManager = function module() {
                 var earliestDate = d3.min(activePositions, function(p) { return p.EarliestUnRealizedBuyDate; });
                 callback({  date: new Date(historicalDate), 
                             returns: returnsData.OverallReturn,
+                            gains: 0, // TODO.
+                            benchmark: returnsData.BenchmarkReturns[0].Return,
+                            xirr: returnsData.BenchmarkXirr,
                             positions: activePositions,
                             startDate: earliestDate
                         });

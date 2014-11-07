@@ -7,8 +7,10 @@
       <link rel="stylesheet" href="css/foundation.css">
       <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
       <style>
+        @import url(http://fonts.googleapis.com/css?family=Roboto+Slab:700|Exo+2:300,600);
+
         body {
-          font-family: 'Helvetica Neue', Helvetica, Helvetica, Arial, sans-serif;
+          font-family: "Exo 2", "Helvetica Neue", Helvetica, sans-serif;
         }
 
         svg {
@@ -16,7 +18,7 @@
         }
         
         .chart text {
-          font: 16px sans-serif;
+          font: 16px "Exo 2";
           text-anchor: middle;
         }
         
@@ -59,19 +61,26 @@
           stroke-width: 2px;
         }
 
+        .benchmarkline {
+          fill: none;
+          stroke: red;
+          stroke-width: 2px;
+        }
+
         .positionReturn {
           fill: none;
           stroke-width: 1.5px;
         }
 
         .position {
-          opacity: .9;
+          fill-opacity: .2;
+          stroke-opacity: 1.0;
           stroke-width: 3.5px;
         }
         
         .axis text {
           fill: #343434;
-          font: 12px sans-serif;
+          font: 12px 'Roboto Slab';
           font-weight:bold;
         }
 
@@ -99,21 +108,27 @@
 
         select {
           display:inline;
-          width:120px;
+          width:180px;
         }
 
-        input {
+        input[type="text"] {
           width: 100px;
+        }
+
+        input[type="radio"] {
+          font-weight:bold;
+          margin:4px 8px;
         }
 
         button {
           background-color:#1f77b4;
           font-size: 0.92222rem;
-          padding: 4px 8px;
+          padding: 6px 8px;
         }
-        
-        #controls {
-          margin-left:200px;
+
+        select, input {
+          font-size: 18px;
+          font-weight: bold;
         }
 
         div.tooltip {   
@@ -129,21 +144,60 @@
           border-radius: 8px;           
           pointer-events: none;         
         }
+
+        .radioSection {
+          margin: 8px 8px;
+        }
+
+        #chart1 {
+          float:left;
+        }
+
+        #dateDisplay {
+          font-size:22px;
+          font-weight: bold;
+        }
+
+        #portfolioControls {
+          float:left;
+          margin-right: 40px;
+        }
+        
+        #dataControls {
+          clear:both;
+          margin-left:340px;
+        }
       </style>
       <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
     </head>
     <body>
       <div id="chart1"></div>
-      <div id="controls">
+      <div id="portfolioControls">
+        <h3>Portfolio</h3>
         <select id="portfolioSelect">
           <option value="0">All Portfolios</option>
         </select>
+        <div class="radioSection">
+          <input type="radio" name="returnsType" value="returns" checked="">Returns %<br/>
+          <input type="radio" name="returnsType" value="gains">Returns $<br/>
+          <input type="radio" name="returnsType" value="value">Market Value $<br/>
+        </div>
+        <div class="radioSection">
+          <input type="radio" name="benchmarkType" value="none" checked="">No Benchmark<br/>
+          <input type="radio" name="benchmarkType" value="benchmark">vs S&amp;P<br/>
+          <input type="radio" name="benchmarkType" value="xirr">vs XIRR<br/>
+        </div>
+      </div> 
+      
+      <div id="dataControls">
         <button id="decreaseDate"><i class="fa fa-step-backward"></i></button>
-        <input type="text" class="date" value="02/01/2014"/>
+        <input type="hidden" class="date" value="02/01/2014"/>
+        <span id="dateDisplay"></span>
         <button id="increaseDate"><i class="fa fa-step-forward"></i></button>
         <button id="playDate"><i class="fa fa-play"></i></button>
         <button id="stopDate"><i class="fa fa-pause"></i></button>
       </div>
+
       <div id="chart2"></div>
       <script type="text/javascript" src="moment.js"></script>
       <script type="text/javascript" src="dataManager.js"></script>

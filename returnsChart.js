@@ -4,10 +4,12 @@ d3.fool.returnsChart = function module() {
   var margin = {top: 20, right: 20, bottom: 40, left: 40}, 
       width = 500, 
       height = 500,
+      returnsType = "returns",
+      benchmarkType = "none"
       ease = "bounce";
 
   var activeDatePoint, activeIndex;
-  var priceDataInstrument;
+  var PositionDataInstrument;
   var returnsLabel;
   var dispatch = d3.dispatch('dateChanged');
   var formatPercent = d3.format(".0%");
@@ -61,11 +63,11 @@ d3.fool.returnsChart = function module() {
         container.append("g").classed("y-axis-group axis", true);
         container.append("g").classed("label-group", true);
 
-        removePriceData();
+        removePositionData();
 
         if (!returnsLabel) {
           returnsLabel = svg.select('.label-group')
-                              .attr({ transform: 'translate(' + chartW/2 + ',' + (chartH-50) + ')'})
+                              .attr({ transform: 'translate(' + chartW/2 + ',' + (chartH-80) + ')'})
                               .append('text')
                               .classed("returnsLabel", true);
         }
@@ -108,6 +110,18 @@ d3.fool.returnsChart = function module() {
         .ease(ease) 
         .call(yAxis);
 
+    svg.selectAll('g.y-axis-group.axis g.tick')
+            .each(function (d) {
+                if (d === 0) {
+                    d3.select(this).append('line')
+                        .classed('grid-line', true)
+                        .attr('x1', 0)
+                        .attr('y1', 0)
+                        .attr('x2', chartW)
+                        .attr('y2', 0);
+                }
+            });
+
     activeDatePoint
       .attr("cx", x1(returnsData[activeIndex].date))
       .attr("cy", y1(returnsData[activeIndex].returns))
@@ -141,6 +155,33 @@ d3.fool.returnsChart = function module() {
         .style({ opacity: 0 })
         .remove();
 
+    chartBenchmark();
+  }
+
+  function chartBenchmark() {
+    var svg = d3.select('svg');
+
+    if (benchmarkType === "none") {
+      svg.selectAll('path.benchmarkline').remove();
+      return;
+    }
+
+    var benchmarkline = line = d3.svg.line()
+            .interpolate("monotone")
+            .x(function(d) { return x1(d.date); })
+            .y(function(d) { return y1(d[benchmarkType]); });
+
+    var benchmarkGraph = svg.select('.chart-group') 
+            .selectAll('path.benchmarkline')
+            .data([returnsData]);
+
+    benchmarkGraph.enter()
+        .append("path")
+        .attr("class", "benchmarkline");
+
+    benchmarkGraph.transition().attr("d", benchmarkline);
+
+    benchmarkGraph.exit().remove();
   }
 
   function moveActiveDatePoint(element, dateIndex) {
@@ -158,58 +199,76 @@ d3.fool.returnsChart = function module() {
                 .style("fill", function (d) { return pointData.returns < 0 ? "red" : "green"; });
   }
 
-  function removePriceData() {
-    d3.selectAll('path.instrument').remove();
+  function removePositionData() {
+    d3.selectAll('path.positionReturn').remove();
+    d3.selectAll(".positionText").remove();
   }
 
-  exports.showPriceData = function(position) {
-    var svg, priceData;
+  exports.showPositionData = function(position) {
+    var svg, PositionData;
     var minReturn, maxReturn;
 
-    y1 = d3.scale.linear()
-        .range([chartH, 0])
-        .domain([d3.min([-.2, d3.min(returnsData, function(d) { return d.returns; })]), 
-                 d3.max([.5, d3.max(returnsData, function(d) { return d.returns; })])]);
+    // y1 = d3.scale.linear()
+    //     .range([chartH, 0])
+        // .domain([d3.min([-.2, d3.min(returnsData, function(d) { return d.returns; })]), 
+        //          d3.max([.5, d3.max(returnsData, function(d) { return d.returns; })])]);
 
-    if (position.instrumentId === priceDataInstrument) {
-      priceDataInstrument = 0; 
-      removePriceData();
+    if (position.instrumentId === PositionDataInstrument) {
+      PositionDataInstrument = 0; 
+      removePositionData();
+      y1.domain([d3.min([-.2, d3.min(returnsData, function(d) { return d.returns; })]), 
+                 d3.max([.5, d3.max(returnsData, function(d) { return d.returns; })])]);
       chartReturns(); 
       return;
     }
 
-    priceDataInstrument = position.instrumentId;
+    PositionDataInstrument = position.instrumentId;
     svg = d3.select("svg");
-    priceData = [];
+    PositionData = [];
     returnsData.forEach(function(d) {
       var positions = d.positions.filter(function(p) { return p.Instrument.InstrumentId === position.instrumentId; });
       if (positions.length) {
-        priceData.push({ returns: positions[0].OverallReturn, date: d.date });
+        PositionData.push({ returns: positions[0].OverallReturn, date: d.date });
       }
     }); 
 
-    minReturn = d3.min([-.2, d3.min(priceData, function(d) { return d.returns; })]);
-    maxReturn = d3.max([.5, d3.max(priceData, function(d) { return d.returns; })]);
+    var existingLines = svg.select('path.positionReturn');
 
-    y1 = d3.scale.linear()
-      .range([chartH, 0])
-      .domain([d3.min([minReturn, y1.domain()[0]]), d3.max([maxReturn, y1.domain()[1]])]);
+    if (existingLines.empty()) {
+      minReturn = d3.min([-.2, d3.min(PositionData, function(d) { return d.returns; })]);
+      maxReturn = d3.max([.5, d3.max(PositionData, function(d) { return d.returns; })]);
+
+      y1.domain([d3.min([minReturn, y1.domain()[0]]), d3.max([maxReturn, y1.domain()[1]])]);
     
-    chartReturns(); 
-
+      chartReturns(); 
+    }
+    
     var lineGraph = svg.select('.chart-group') 
-        .selectAll('path.positionReturn')
-        .data([priceData]);
+        .selectAll('path.instrument' + position.instrumentId)
+        .data([PositionData]);
 
     lineGraph.enter()
         .append("path")
-        .attr("class", "positionReturn");
+        .attr("class", "positionReturn instrument" + position.instrumentId);
 
     lineGraph.transition()
       .attr("d", line)
+      .style("stroke-dasharray", ("3, 3"))
       .attr("stroke", position.color);
 
     lineGraph.exit().remove();
+
+    var bisect = d3.bisector(function(d) { return x1(d.date); }).left;
+    var matchIndex = bisect(PositionData, position.x);
+    var previousY = y1(PositionData[matchIndex-1].returns);
+    var nextY = y1(PositionData[matchIndex].returns);
+    
+    svg.append('text')
+        .classed("positionText", true)
+        .attr("x", position.x)
+        .attr("y", (previousY+nextY)/2 - 5)
+        .attr("stroke", position.color)
+        .text(position.ticker);
   }
 
   exports.setDatePointIndex = function(index) {
@@ -234,6 +293,19 @@ d3.fool.returnsChart = function module() {
   exports.height = function(h) { 
     if (!arguments.length) return height; 
     height = parseInt(h); 
+    return this; 
+  };
+
+  exports.returnsType = function(rt) { 
+    if (!arguments.length) return returnsType; 
+    returnsType = rt; 
+    return this; 
+  };
+
+  exports.benchmarkType = function(bt) { 
+    if (!arguments.length) return benchmarkType; 
+    benchmarkType = bt; 
+    chartBenchmark();
     return this; 
   };
 

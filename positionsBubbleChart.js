@@ -7,8 +7,9 @@ d3.fool.positionsBubbleChart = function module() {
         ease = "bounce";
 
     var duration = 1000;
+    var colorRange = 10;
     var formatPercent = d3.format(".0%");
-    var colors = d3.scale.category10();
+    var colors = d3.scale.category10().domain([0,colorRange-1]);
     var dispatch = d3.dispatch('positionSelected');
 
     function exports(selection) {
@@ -17,7 +18,7 @@ d3.fool.positionsBubbleChart = function module() {
             chartH = height - margin.top - margin.bottom;
 
         var x1 = d3.scale.linear()
-            .domain([0, data.length])
+            .domain([0, data.length > 2 ? data.length : 3])
             .range([0, chartW]);
 
         var y1 = d3.scale.linear()
@@ -80,11 +81,12 @@ d3.fool.positionsBubbleChart = function module() {
             .attr("cx", function(d, i) { return x1(i+1); })
             .attr("cy", function(d) { return y1(d.OverallReturn); })
             .attr("r", function(d) { return d3.max([2, d.PercentOfPortfolio * 100]); })
-            .attr("fill", "none")
+            .attr("fill", function(d, i) { 
+                return colors(d.Instrument.InstrumentId % colorRange);        
+            })
             .attr("stroke", function(d, i) { 
-                return colors(i);        
+                return colors(d.Instrument.InstrumentId % colorRange);        
             });
-
     
         positions.exit()
             .transition()
@@ -97,12 +99,22 @@ d3.fool.positionsBubbleChart = function module() {
                     
         labels.enter()
             .append('text')
-            .attr("class", "positions-label")
-            .on('click', function(d, i) {
-                dispatch.positionSelected({ instrumentId: d.Instrument.InstrumentId, color: colors(i) });
-            });
+            .attr("class", "positions-label");
             
         labels
+            .on('click', function(d, i) {
+                    var xPos = x1(i+1) - 10;
+                    dispatch.positionSelected({
+                        instrumentId: d.Instrument.InstrumentId, 
+                        color: colors(d.Instrument.InstrumentId % colorRange),
+                        ticker: d.Ticker,
+                        x: xPos
+                     });
+                    svg.append('circle')
+                        .attr("cx", xPos)
+                        .attr("cy", 200)
+                        .attr("r", 2);
+                })
             .transition().duration(duration)
                 .attr("x", function(d, i) { return x1(i+1); })
                 .attr("y", function(d) { 
@@ -121,6 +133,7 @@ d3.fool.positionsBubbleChart = function module() {
                     }
                     return "black"; 
                 })
+                
     
         labels.exit()
             .transition()
