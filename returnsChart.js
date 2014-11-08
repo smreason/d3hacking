@@ -18,7 +18,8 @@ d3.fool.returnsChart = function module() {
   var chartH, chartW;
   var returnsData;
   var yAxis, xAxis;
-  var x1, y1, line;
+  var x1, y1;
+  var line, area;
 
   function exports(selection) {
     selection.each(function(data) { 
@@ -50,6 +51,12 @@ d3.fool.returnsChart = function module() {
             .x(function(d) { return x1(d.date); })
             .y(function(d) { return y1(d.returns); });
 
+        area = d3.svg.area() 
+            .interpolate("monotone")   
+            .x(function(d) { return x1(d.date); })   
+            .y0(function(d) { return y1(0); })                 
+            .y1(function(d) { return y1(d.returns); });
+
         xAxis = d3.svg.axis().scale( x1).ticks(xTicks).orient('bottom').tickFormat(d3.time.format("%b %y"));
 
         var svg = d3.select(this)
@@ -63,6 +70,11 @@ d3.fool.returnsChart = function module() {
         container.append("g").classed("x-axis-group axis", true);
         container.append("g").classed("y-axis-group axis", true);
         container.append("g").classed("label-group", true);
+        container.append("linearGradient")                    
+          .attr("id", "area-gradient")                
+          .attr("gradientUnits", "userSpaceOnUse")    
+          .attr("x1", 0).attr("y1", 0)             
+          .attr("x2", 0).attr("y2", chartH);
 
         removePositionData();
 
@@ -88,6 +100,7 @@ d3.fool.returnsChart = function module() {
             .ease(ease) 
             .attr({ transform: 'translate( 0,' + (chartH) + ')'}) 
             .call(xAxis);
+
       
         chartReturns();
     });
@@ -95,7 +108,8 @@ d3.fool.returnsChart = function module() {
 
   function chartReturns() {
     var svg = d3.select('svg');
-    var lineGraph = svg.select('.chart-group') 
+    var chartGroup = svg.select('.chart-group');
+    var lineGraph = chartGroup
             .selectAll('path.line')
             .data([returnsData]);
 
@@ -104,6 +118,30 @@ d3.fool.returnsChart = function module() {
         .attr("class", "line");
 
     lineGraph.transition().attr("d", line);
+
+    var gradientStops = svg.select('#area-gradient')
+      .selectAll("stop")                              
+          .data([                                     
+              {offset: "0%", color: "green"},             
+              {offset: 100 - (chartH-y1(0))*100/chartH + "%", color: "lightgreen"}    
+          ])                                          
+        .enter()
+          .append("stop");                        
+            
+      gradientStops.attr("offset", function(d) { return d.offset; })       
+                   .attr("stop-color", function(d) { return d.color; });   
+
+    var areaGraph = chartGroup
+            .selectAll('path.area')
+            .data([returnsData]);
+
+    areaGraph.enter()
+        .append("path")
+        .attr("class", "area");
+
+    areaGraph.transition()
+      .attr('fill-opacity', positionDataInstrument === 0 ? .1 : 0)
+      .attr("d", area);
 
     yAxis = d3.svg.axis().scale( y1).orient('left').ticks(6).tickFormat(formatPercent);
     svg.select('.y-axis-group.axis') 
