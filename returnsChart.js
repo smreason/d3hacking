@@ -9,7 +9,7 @@ d3.fool.returnsChart = function module() {
       ease = "bounce";
 
   var activeDatePoint, activeIndex;
-  var PositionDataInstrument;
+  var positionDataInstrument;
   var returnsLabel;
   var dispatch = d3.dispatch('dateChanged');
   var formatPercent = d3.format(".0%");
@@ -27,6 +27,7 @@ d3.fool.returnsChart = function module() {
 
         returnsData = data;
         activeIndex = returnsData.length - 1;
+        positionDataInstrument = 0;
 
         x1 = d3.time.scale()
             .range([0, chartW])
@@ -170,7 +171,7 @@ d3.fool.returnsChart = function module() {
       return;
     }
 
-    var benchmarkline = line = d3.svg.line()
+    var benchmarkline = d3.svg.line()
             .interpolate("monotone")
             .x(function(d) { return x1(d.date); })
             .y(function(d) { return y1(d[benchmarkType]); });
@@ -212,8 +213,8 @@ d3.fool.returnsChart = function module() {
     var svg, PositionData;
     var minReturn, maxReturn;
 
-    if (position.instrumentId === PositionDataInstrument) {
-      PositionDataInstrument = 0; 
+    if (position.instrumentId === positionDataInstrument) {
+      positionDataInstrument = 0; 
       removePositionData();
       y1.domain([d3.min([-.2, d3.min(returnsData, function(d) { return d.returns; })]), 
                  d3.max([.5, d3.max(returnsData, function(d) { return d.returns; })])]);
@@ -221,7 +222,7 @@ d3.fool.returnsChart = function module() {
       return;
     }
 
-    PositionDataInstrument = position.instrumentId;
+    positionDataInstrument = position.instrumentId;
     svg = d3.select("svg");
     PositionData = [];
     returnsData.forEach(function(d) {
@@ -259,7 +260,8 @@ d3.fool.returnsChart = function module() {
 
     var bisect = d3.bisector(function(d) { return x1(d.date); }).left;
     var matchIndex = bisect(PositionData, position.x);
-    var previousY = y1(PositionData[matchIndex-1].returns);
+    var previousIndex = matchIndex > 0 ? matchIndex - 1 : 0;
+    var previousY = y1(PositionData[previousIndex].returns);
     var nextY = y1(PositionData[matchIndex].returns);
     var labelYoffset = nextY < chartH * .2 ? -30 : -5;
     

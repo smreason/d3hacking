@@ -4,7 +4,7 @@ d3.fool.dataManager = function module() {
     var exports = {}, 
     uid,
     dispatch = d3.dispatch('dataReady', 'dataLoading'),
-    server = '//api.fool.com';
+    server = '//test.apiary.fool.com';
 
     exports.loadPortfolios = function(callback) {
         d3.json(server + '/folios/portfolios').header("X-Requested-With", "XMLHttpRequest").get( 
