@@ -9,6 +9,7 @@ var historicalData = {};
 var dataManager = d3.fool.dataManager();
 var returnsChart = d3.fool.returnsChart().height(400).width(800);
 var positionsChart = d3.fool.positionsBubbleChart().height(400).width(800);
+var portfolioTreeChart = d3.fool.portfolioTreeChart().height(660).width(600);
 
 var portfolioSelect = d3.select("#portfolioSelect");
 var decreaseButton = d3.select("#decreaseDate");
@@ -25,6 +26,7 @@ portfolioSelect.on('change', function(e) {
     setDateInput(historicalData[currentPortfolio].data[currentIndex].date);
     updateReturns();
     updatePositions(currentIndex);
+    updatePortfolioTree();
 
     d3.select("#portfolioName").text(this.selectedOptions[0].text);
 });
@@ -80,12 +82,14 @@ function changeDateAndUpdate(change) {
     if (currentIndex < historicalData[currentPortfolio].data.length) {
         returnsChart.setDatePointIndex(currentIndex);
         updatePositions(currentIndex);
+        updatePortfolioTree();
     }
     else {
         dataManager.loadHistoricalReturnsData(currentPortfolio, dateInput.property("value"), function(data) {
             historicalData[currentPortfolio].data.push(data);
             updateReturns();
             updatePositions(currentIndex);
+            updatePortfolioTree();
         });
         if (currentPortfolio !== 0) {
             dataManager.loadHistoricalReturnsData(0, dateInput.property("value"), function(data) {
@@ -114,6 +118,12 @@ function updatePositions(i) {
         .call(positionsChart);
 }
 
+function updatePortfolioTree() {
+    d3.select('#chart3') 
+        .datum(historicalData) 
+        .call(portfolioTreeChart, { portfolioIndex: currentPortfolio, dateIndex: currentIndex }); 
+}
+
 function setDateInput(date) {
     dateInput.property("value", moment(date).format("L"));
     dateDisplay.text(moment(date).format("MMM YYYY"));
@@ -130,6 +140,7 @@ function loadInitialReturns(portfolio, date, isFirst) {
             currentIndex = 0;
             updateReturns();
             updatePositions(currentIndex);
+            updatePortfolioTree();
         }
     });
 }
