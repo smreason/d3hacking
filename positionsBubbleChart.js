@@ -9,7 +9,7 @@ d3.fool.positionsBubbleChart = function module() {
     var duration = 1000;
     var colorRange = 20;
     var formatPercent = d3.format(".0%");
-    var colors = d3.scale.category20().domain([0,colorRange-1]);
+    var colors = d3.scale.category20().domain(d3.range(0,colorRange));
     var dispatch = d3.dispatch('positionSelected');
 
     function exports(selection) {

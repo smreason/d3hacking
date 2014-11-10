@@ -11,7 +11,7 @@ d3.fool.portfolioTreeChart = function module() {
     var nodes;
 
     var dispatch = d3.dispatch('portfolioSelected');
-    var colors = d3.scale.category20().domain([0,19]);
+    var colors = d3.scale.category20().domain(d3.range(0,20));
     var pie = d3.layout.pie().sort(null);
     var radius = 12;
     var arc = d3.svg.arc().outerRadius(function(d) { return radius; });
