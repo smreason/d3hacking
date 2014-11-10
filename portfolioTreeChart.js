@@ -197,6 +197,10 @@ d3.fool.portfolioTreeChart = function module() {
     }
 
     function toggle(d) {
+        if (d.type === "portfolio") {
+            dispatch.portfolioSelected(d.name);
+        }
+        
         if (d.children) {
             d._children = d.children;
             d.children = null;

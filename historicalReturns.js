@@ -177,6 +177,24 @@ positionsChart.on("positionSelected", function(position) {
     returnsChart.showPositionData(position);
 });
 
+portfolioTreeChart.on("portfolioSelected", function(portfolio) {
+    console.log(portfolio);
+    var sel = portfolioSelect.node();
+    for(var i = 0, j = sel.options.length; i < j; ++i) {
+        if(sel.options[i].innerHTML === portfolio) {
+           sel.selectedIndex = i;
+           break;
+        }
+    }
+
+    currentPortfolio = parseInt(portfolioSelect.node().value);
+    currentIndex = historicalData[currentPortfolio].data.length - 1;
+
+    updateReturns();
+    updatePositions(currentIndex);
+    d3.select("#portfolioName").text(sel.selectedOptions[0].text);
+});
+
 dataManager.on('dataLoading', function() {
     d3.selectAll('button').attr('disabled', true);
 });
