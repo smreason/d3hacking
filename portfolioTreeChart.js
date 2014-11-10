@@ -52,8 +52,8 @@ d3.fool.portfolioTreeChart = function module() {
     function render(source) {
         var nodes = tree.nodes(source).reverse();
         renderNodes(nodes, source);
+        renderPies();
         renderLinks(nodes, source);
-        renderPies(nodes, source);
     }
 
     function renderNodes(nodes, source) {
@@ -110,7 +110,7 @@ d3.fool.portfolioTreeChart = function module() {
         nodeExit.select("circle").attr("r", 1e-6);
         
         renderLabels(nodeEnter, nodeUpdate, nodeExit);
-        //renderPies(nodeEnter, nodeUpdate, nodeExit);
+        renderLogos(nodeEnter, nodeUpdate, nodeExit);
         
         nodes.forEach(function (d) {
             d.x0 = d.x;
@@ -179,6 +179,23 @@ d3.fool.portfolioTreeChart = function module() {
             });
     }
 
+    function renderLogos(nodeEnter, nodeUpdate, nodeExit) {
+        nodeEnter.filter(function(d) { return d.type === "position"; })
+                .append("svg:image")
+                .attr("width", 25)
+                .attr("height", 25)
+                .attr("x", 86)
+                .attr("y", -14)
+                .attr("xlink:href", function(d) {
+                    return "https://g.foolcdn.com/art/companylogos/square/" + d.name + ".png";
+                });
+                
+        // nodeUpdate.select("text")
+        //         .style("fill-opacity", 1);
+        // nodeExit.select("text")
+        //         .style("fill-opacity", 1e-6);
+    }
+
     function toggle(d) {
         if (d.children) {
             d._children = d.children;
@@ -198,7 +215,7 @@ d3.fool.portfolioTreeChart = function module() {
 
     function buildRootTreeData(portfolioData, dateIndex) {
         var parent = {
-            name: "All Portfolios",
+            name: "All Scorecards",
             children: [],
             percents: [100],
             type: "all"
