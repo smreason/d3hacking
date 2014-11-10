@@ -12,6 +12,9 @@ d3.fool.portfolioTreeChart = function module() {
 
     var dispatch = d3.dispatch('portfolioSelected');
     var colors = d3.scale.category20().domain([0,19]);
+    var pie = d3.layout.pie().sort(null);
+    var radius = 12;
+    var arc = d3.svg.arc().outerRadius(function(d) { return radius; });
 
     function exports(selection, settings) {
         selection.each(function(data) { 
@@ -30,12 +33,12 @@ d3.fool.portfolioTreeChart = function module() {
                 .selectAll("svg")
                 .data([data]);
 
-            container = svg.enter().append("svg")
+            svg.enter().append("svg")
               .classed("chart", true)
               .append("g").classed("container-group", true);
 
             svg.transition().attr({ width: width, height: height}); 
-            svg.select('.container-group').attr({ transform: 'translate(' + margin.left + ',' + margin.top + ')'});
+            container = svg.select('.container-group').attr({ transform: 'translate(' + margin.left + ',' + margin.top + ')'});
 
             root = treeData;
 
@@ -50,16 +53,19 @@ d3.fool.portfolioTreeChart = function module() {
         var nodes = tree.nodes(source).reverse();
         renderNodes(nodes, source);
         renderLinks(nodes, source);
+        renderPies(nodes, source);
     }
 
     function renderNodes(nodes, source) {
         nodes.forEach(function (d) {
             d.y = d.depth * 180;
         });
+
         var node = container.selectAll("g.node")
                 .data(nodes, function (d) {
                     return d.id || (d.id = ++_i);
                 });
+
         var nodeEnter = node.enter().append("svg:g")
                 .attr("class", "node")
                 .attr("transform", function (d) {
@@ -70,33 +76,42 @@ d3.fool.portfolioTreeChart = function module() {
                     toggle(d);
                     render(d);
                 });
+
         nodeEnter.append("svg:circle")
                 .attr("r", 1e-6)
                 .style("stroke", function(d) {
-                    return d.type === 1 ? "blue" : colors(d.instrumentId % 20)
+                    if (d.type === "portfolio") { return "none"; }
+                    return d.type !== "position" ? "blue" : colors(d.instrumentId % 20)
                 })
                 .style("fill", function (d) {
-                    return d._children ? "lightsteelblue" : "#fff";
+                    return d.type !== "position" ? "lightsteelblue" : "#fff";
                 });
+
         var nodeUpdate = node.transition()
                 .attr("transform", function (d) {
                     return "translate(" + d.y + "," + d.x + ")";
                 });
+
         nodeUpdate.select("circle")
-                .attr("r", 4.5)
+                .attr("r", function(d) {
+                    return d.type === "position" ? 4.5 : 12;
+                })
                 .style("fill", function (d) {
-                    console.dir(d);
-                    return d._children ? "lightsteelblue" : "#fff";
+                    return d.type !== "position" ? "lightsteelblue" : "#fff";
                 });
+
         var nodeExit = node.exit().transition()
                 .attr("transform", function (d) {
                     return "translate(" + source.y 
                         + "," + source.x + ")";
                 })
                 .remove();
-        nodeExit.select("circle")
-                .attr("r", 1e-6);
+
+        nodeExit.select("circle").attr("r", 1e-6);
+        
         renderLabels(nodeEnter, nodeUpdate, nodeExit);
+        //renderPies(nodeEnter, nodeUpdate, nodeExit);
+        
         nodes.forEach(function (d) {
             d.x0 = d.x;
             d.y0 = d.y;
@@ -109,7 +124,7 @@ d3.fool.portfolioTreeChart = function module() {
                     return d.children || d._children ? 10 : 35;
                 })
                 .attr("dy", function (d, i) {
-                    return d.children || d._children ?  "1.35em" : ".2em";
+                    return d.children || d._children ?  "-1.35em" : ".2em";
                 })
                 .attr("text-anchor", function (d) {
                     return d.children || d._children ? "end" : "start";
@@ -145,6 +160,25 @@ d3.fool.portfolioTreeChart = function module() {
                 .remove();
     }
 
+    function renderPies() {
+        container.selectAll('g.node')
+            .filter(function(d) { return d.type === "portfolio"; })
+            .selectAll("path.pie")
+            .data(function(d) { 
+                var positions = d.children || [0];
+                var pieData = pie(d.percents);
+                for(var i = 0; i < pieData.length; i++) {
+                    pieData[i].position = positions[i];
+                }
+                return pieData; 
+            })
+            .enter().append("path")
+            .attr("d", arc)
+            .style("fill", function(d,i) { 
+                return d.position ? colors(d.position.instrumentId % 20) : "lightsteelblue";
+            });
+    }
+
     function toggle(d) {
         if (d.children) {
             d._children = d.children;
@@ -166,7 +200,8 @@ d3.fool.portfolioTreeChart = function module() {
         var parent = {
             name: "All Portfolios",
             children: [],
-            type: 1
+            percents: [100],
+            type: "all"
         };
 
         for(var prop in portfolioData) {
@@ -174,7 +209,8 @@ d3.fool.portfolioTreeChart = function module() {
                 portfolio = {
                     name: portfolioData[prop].name,
                     children: [],
-                    type: 1
+                    percents: [],
+                    type: "portfolio"
                 };
                 var positions = portfolioData[prop].data[dateIndex].positions;
 
@@ -182,18 +218,44 @@ d3.fool.portfolioTreeChart = function module() {
                     portfolio.children.push({
                         name: positions[i].Ticker,
                         instrumentId: positions[i].Instrument.InstrumentId,
-                        type: 2
+                        type: "position"
                     });
+                    portfolio.percents.push(positions[i].PercentOfPortfolio);
                 }
 
+                if (portfolio.percents.length === 0) {
+                    portfolio.percents.push(100);
+                }
                 parent.children.push(portfolio);
             }
         }
         return parent;
     }
 
-    function buildPortfolioTreeData(data, portfolioNum) {
+    function buildPortfolioTreeData(portfolioData, portfolioNum, dateIndex) {
+        var portfolio = {
+                name: portfolioData[portfolioNum].name,
+                children: [],
+                percents: [],
+                type: "portfolio"
+            };
 
+        var positions = portfolioData[portfolioNum].data[dateIndex].positions;
+
+        for(var i = 0; i < positions.length; i++) {
+            portfolio.children.push({
+                name: positions[i].Ticker,
+                instrumentId: positions[i].Instrument.InstrumentId,
+                type: "position"
+            });
+            portfolio.percents.push(positions[i].PercentOfPortfolio);
+        }
+
+        if (portfolio.percents.length === 0) {
+            portfolio.percents.push(100);
+        }
+
+        return portfolio;
     }
 
     exports.width = function(w) { 
